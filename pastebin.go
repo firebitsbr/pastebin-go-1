@@ -20,6 +20,10 @@ type Paste struct {
 	Privacy    int
 }
 
+type Response struct {
+	ResCode int `json:""`
+}
+
 func NewPastebin(devKey, userKey string) Credentials {
 	return Credentials{
 		DevKey:  devKey,
@@ -27,5 +31,15 @@ func NewPastebin(devKey, userKey string) Credentials {
 	}
 }
 
-func NewPaste(code, name, format, expiration string, privacy int) Paste {
+func (c Credentials) NewPaste(code, name, format, expiration string, privacy int) Paste {
+	return Paste{
+		Code:       code,
+		Name:       name,
+		Format:     format,
+		Expiration: experiation,
+		Privacy, privacy,
+	}
+}
+
+func (c Credentials) SendPaste() (Response, error) {
 }
