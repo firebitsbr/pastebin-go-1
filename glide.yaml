@@ -1,0 +1,3 @@
+package: pastebin-go
+import:
+- package: gopkg.in/yaml.v2

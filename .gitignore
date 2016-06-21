@@ -27,3 +27,6 @@ _testmain.go
 *.test
 *.prof
 
+# Third-party libs
+*.lock
+vendor/
