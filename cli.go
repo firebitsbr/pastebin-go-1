@@ -23,6 +23,20 @@ func main() {
 	}
 }
 
+// Read file to be pasted into memory
+func LoadFile(filepath string) string {
+	if _, err := os.Stat(filepath); os.IsNotExist(err) {
+		log.Fatal("Filepath at '%s' does not exist", filepath)
+	}
+
+	fileContents, err := ioutil.ReadFile(filepath)
+	if err != nil {
+		log.Fatal("Failed to read file at '%s'", filepath)
+	}
+
+	return string(fileContents)
+}
+
 func LoadConfig(confpath string) Config {
 	if _, err := os.Stat(confpath); os.IsNotExist(err) {
 		log.Fatal("Config at '%s' does not exist", confpath)
