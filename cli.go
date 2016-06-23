@@ -115,6 +115,10 @@ func LoadConfig(confpath string) Config {
 }
 
 // Generate POST to pasteboard API
-// @Params:
+// @Params: meta - file Metadata struct
+//				 - conf Config struct
+//               - expiration date string
+//               - privacy denoting visibility of paste
+// @Return: url provided by pastebin
 func GeneratePaste(meta Metadata, conf Config, expiration string, privacy int) string {
 }
