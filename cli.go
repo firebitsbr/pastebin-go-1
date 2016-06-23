@@ -10,19 +10,33 @@ import (
 	"strings"
 )
 
+/************************************
+ ********** STRUCT DEFS *************
+ ************************************/
 type Config struct {
 	DevKey  string `yaml:"devkey"`
 	UserKey string `yaml:"userkey"`
 }
 
 type Metadata struct {
-	Filetype string
-	Filename string
+	Filetype     string
+	Filename     string
+	Filecontents string
 }
 
+/************************************
+ *********** CONSTANTS **************
+ ************************************/
+const baseUrl string = "http://pastebin.com/api/api_post.php"
+
+/************************************
+ *************** MAIN ***************
+ ************************************/
 func main() {
 	// setting up flags
 	config := flag.String("conf", "", "config file path")
+	expiration := flag.String("exp", "", "paste expiration date")
+	privacy := flag.Int("priv", -1, "post privacy settings")
 
 	flag.Parse()
 
@@ -33,7 +47,7 @@ func main() {
 }
 
 // Read file to be pasted into memory
-func LoadFile(filepath string) string {
+func LoadFile(filepath string) Metadata {
 	if _, err := os.Stat(filepath); os.IsNotExist(err) {
 		log.Fatal("Filepath at '%s' does not exist", filepath)
 	}
@@ -43,10 +57,6 @@ func LoadFile(filepath string) string {
 		log.Fatal("Failed to read file at '%s'", filepath)
 	}
 
-	return string(fileContents)
-}
-
-func LoadFileMetadata(filepath string) Metadata {
 	// need to remove the leading '.' from extension
 	fileType := string(fp.Ext(filepath)[1:])
 
@@ -59,8 +69,9 @@ func LoadFileMetadata(filepath string) Metadata {
 	fileName := strings.TrimRight(fp.Base(filepath), fileType)
 
 	return Metadata{
-		Filetype: fileType,
-		Filename: fileName,
+		Filetype:     fileType,
+		Filename:     fileName,
+		Filecontents: string(fileContents),
 	}
 }
 
