@@ -1,14 +1,23 @@
 package main
 
-import "fmt"
-import "flag"
-import yaml "gopkg.in/yaml.v2"
-import "os"
-import "log"
+import (
+	"flag"
+	yaml "gopkg.in/yaml.v2"
+	"io/ioutil"
+	"log"
+	"os"
+	fp "path/filepath"
+	"strings"
+)
 
 type Config struct {
 	DevKey  string `yaml:"devkey"`
 	UserKey string `yaml:"userkey"`
+}
+
+type Metadata struct {
+	Filetype string
+	Filename string
 }
 
 func main() {
@@ -19,7 +28,7 @@ func main() {
 
 	if *config == "" {
 		homeDir := os.Getenv("HOME")
-		*conf = strings.Join([]string{homedir, ".pastebin.yaml"})
+		*config = strings.Join([]string{homeDir, ".pastebin.yaml"}, "/")
 	}
 }
 
@@ -35,6 +44,24 @@ func LoadFile(filepath string) string {
 	}
 
 	return string(fileContents)
+}
+
+func LoadFileMetadata(filepath string) Metadata {
+	// need to remove the leading '.' from extension
+	fileType := string(fp.Ext(filepath)[1:])
+
+	// do we have an empty extension?
+	if fileType == "" {
+		fileType = "txt"
+	}
+
+	// getting filename
+	fileName := strings.TrimRight(fp.Base(filepath), fileType)
+
+	return Metadata{
+		Filetype: fileType,
+		Filename: fileName,
+	}
 }
 
 func LoadConfig(confpath string) Config {
