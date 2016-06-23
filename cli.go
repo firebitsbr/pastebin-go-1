@@ -44,9 +44,27 @@ func main() {
 		homeDir := os.Getenv("HOME")
 		*config = strings.Join([]string{homeDir, ".pastebin.yaml"}, "/")
 	}
+
+	if *privacy != 0 && *privacy != 1 && *privacy != 2 && *privacy != nil {
+		log.Fatal("Privacy should be 0, 1, or 2 (defaults to 0)")
+	}
+
+	// currently only supporting PB of a single file
+	tail := flag.Args()
+
+	if len(tail) != 1 {
+		log.Fatal("Expecting one file as input")
+	}
+
+	fileMeta := LoadFile(tail[0])
+	pbConf := LoadConfig(*config)
+
+	pbUrl := GeneratePaste(fileMeta, pbConf, *expiration, *privacy)
 }
 
-// Read file to be pasted into memory
+// Load file to be read into memory.
+// @Params: filepath - path where file is is located
+// @Return: Metadata struct
 func LoadFile(filepath string) Metadata {
 	if _, err := os.Stat(filepath); os.IsNotExist(err) {
 		log.Fatal("Filepath at '%s' does not exist", filepath)
@@ -75,6 +93,9 @@ func LoadFile(filepath string) Metadata {
 	}
 }
 
+// Load configuration into memory
+// @Params: confpath - filepath of configuration file
+// @Return: Config struct
 func LoadConfig(confpath string) Config {
 	if _, err := os.Stat(confpath); os.IsNotExist(err) {
 		log.Fatal("Config at '%s' does not exist", confpath)
@@ -91,4 +112,9 @@ func LoadConfig(confpath string) Config {
 		log.Fatal("Could not unmarshal configuration file")
 	}
 	return config
+}
+
+// Generate POST to pasteboard API
+// @Params:
+func GeneratePaste(meta Metadata, conf Config, expiration string, privacy int) string {
 }
