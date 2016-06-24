@@ -1,10 +1,14 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
 	"flag"
+	"fmt"
 	yaml "gopkg.in/yaml.v2"
 	"io/ioutil"
 	"log"
+	"net/http"
 	"os"
 	fp "path/filepath"
 	"strings"
@@ -22,6 +26,17 @@ type Metadata struct {
 	Filetype     string
 	Filename     string
 	Filecontents string
+}
+
+type PostData struct {
+	DevKey     string `json:"api_dev_key"`
+	Option     string `json:"api_option"`
+	Code       string `json:"api_paste_code"`
+	UserKey    string `json:"api_user_key"`
+	Name       string `json:"api_paste_name"`
+	Filetype   string `json:"api_paste_format"`
+	Privacy    int    `json:"api_paste_private"`
+	Expiration string `json:"api_paste_expire_date"`
 }
 
 /************************************
@@ -45,7 +60,7 @@ func main() {
 		*config = strings.Join([]string{homeDir, ".pastebin.yaml"}, "/")
 	}
 
-	if *privacy != 0 && *privacy != 1 && *privacy != 2 && *privacy != nil {
+	if *privacy != 0 && *privacy != 1 && *privacy != 2 && *privacy != -1 {
 		log.Fatal("Privacy should be 0, 1, or 2 (defaults to 0)")
 	}
 
@@ -60,6 +75,8 @@ func main() {
 	pbConf := LoadConfig(*config)
 
 	pbUrl := GeneratePaste(fileMeta, pbConf, *expiration, *privacy)
+
+	fmt.Printf("Got back url of '%s'\n", pbUrl)
 }
 
 // Load file to be read into memory.
@@ -121,4 +138,48 @@ func LoadConfig(confpath string) Config {
 //               - privacy denoting visibility of paste
 // @Return: url provided by pastebin
 func GeneratePaste(meta Metadata, conf Config, expiration string, privacy int) string {
+	// privacy defaults to public
+	if privacy == -1 {
+		privacy = 0
+	}
+
+	if expiration == "" {
+		expiration = "N"
+	}
+
+	// load this into struct
+	data := PostData{
+		DevKey:     conf.DevKey,
+		Code:       meta.Filecontents,
+		Privacy:    privacy,
+		Name:       meta.Filename,
+		Expiration: expiration,
+		Filetype:   meta.Filetype,
+		UserKey:    conf.UserKey,
+		Option:     "paste",
+	}
+
+	jsonData, err := json.Marshal(data)
+	if err != nil {
+		log.Fatal("Could not marshal request into json")
+	}
+
+	req, err := http.NewRequest("POST", baseUrl, bytes.NewBuffer(jsonData))
+	if err != nil {
+		log.Fatal("Error creating HTTP request")
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	client := http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Fatal("Error sending HTTP request")
+	}
+
+	defer resp.Body.Close()
+
+	log.Printf("Got response with %s code\n", resp.Status)
+	body, _ := ioutil.ReadAll(resp.Body)
+
+	return string(body)
 }
